@@ -1,45 +1,23 @@
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const TerserPlugin = require('terser-webpack-plugin')
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const CopyPlugin = require('copy-webpack-plugin')
 
 module.exports = {
   entry: path.resolve(__dirname, 'src/index.js'), // entry point
-  output: {
-    filename: '[name].[contenthash].js', // name of output file
-    path: path.resolve(__dirname, 'dist'),
-    // publicPath: 'dist/', // use to serve static files for Image i.e URL/...
-    clean: true, // clean dist folder before build
+  resolve: {
+    extensions: ['.js', '.jsx', '.ts', '.tsx'],
   },
   module: {
     rules: [
       {
-        test: /\.(js|jsx)$/,
+        test: /\.(js|jsx|ts|tsx)$/,
         include: path.resolve(__dirname, 'src'),
         exclude: path.resolve(__dirname, 'node_modules'),
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
-              presets: [
-                [
-                  '@babel/preset-env',
-                  {
-                    targets: 'defaults',
-                  },
-                ],
-                '@babel/preset-react',
-              ],
-            },
-          },
-        ],
-      },
-      {
-        test: /\.(png|jpeg|jpg|gif)$/,
-        type: 'asset',
-        parser: {
-          //condition to choose  asset/resource or asset/inline
-          dataUrlCondition: {
-            maxSize: 3 * 1024,
-          },
+
+        use: {
+          loader: 'babel-loader',
         },
       },
       {
@@ -54,13 +32,36 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
+      title: 'webpack setup',
       template: './src/index.html',
       filename: 'index.html',
+      meta: {
+        description: 'some description',
+      },
     }),
+    //terser plugin to reduce the js bundle size
+    new TerserPlugin(),
+    // Clean Webpack Plugin  cleans the dist folder before generating new bundles
+    //its is same as providing clean: true on Output but give more features of removing any folder before generating bundles
+    new CleanWebpackPlugin({
+      cleanOnceBeforeBuildPatterns: [
+        '**/*',
+        path.join(process.cwd(), 'build/**/*'),
+      ],
+    }),
+
+    // new CopyPlugin({
+    //   patterns: [
+    //     {
+    //       from: 'assets/*.*',
+    //     },
+    //   ],
+    // }),
   ],
   optimization: {
     splitChunks: {
       chunks: 'all', // include all types of chunks
+      minSize: 3000, //create additional bundle for > min size
     },
   },
 }
